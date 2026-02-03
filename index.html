@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Advanced Modern Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+    * { box-sizing: border-box; font-family: 'Roboto', sans-serif; }
+    body { margin:0; background:#f4f4f9; display:flex; justify-content:center; align-items:flex-start; min-height:100vh; padding:20px; }
+    .calculator { background:#1e1e2f; color:#fff; border-radius:15px; padding:20px; width:350px; max-width:100%; box-shadow:0 8px 20px rgba(0,0,0,0.3);}
+    .tabs { display:flex; justify-content:space-between; margin-bottom:20px; }
+    .tab { flex:1; padding:10px; cursor:pointer; text-align:center; border-radius:10px; margin:0 5px; background:#2b2b3f; transition:0.3s;}
+    .tab.active { background:#4e5dff; }
+    .tab-content { display:none; }
+    .tab-content.active { display:block; }
+    input, select, button { width:100%; padding:10px; margin:5px 0; border:none; border-radius:10px; }
+    input { font-size:18px; }
+    button { background:#4e5dff; color:#fff; cursor:pointer; font-weight:500; transition:0.2s; }
+    button:hover { background:#3c4acc; }
+    .calc-buttons { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-top:10px; }
+    .history { max-height:150px; overflow-y:auto; background:#2b2b3f; padding:10px; border-radius:10px; margin-top:10px; }
+    .history-item { padding:5px; border-bottom:1px solid #444; font-size:14px; }
+</style>
+</head>
+<body>
+
+<div class="calculator">
+    <div class="tabs">
+        <div class="tab active" data-tab="standard">Standard</div>
+        <div class="tab" data-tab="currency">Currency</div>
+        <div class="tab" data-tab="investment">Investment</div>
+    </div>
+
+    <!-- Standard Calculator -->
+    <div class="tab-content active" id="standard">
+        <input type="text" id="calc-display" placeholder="0" readonly>
+        <div class="calc-buttons">
+            <button onclick="appendCalc('7')">7</button>
+            <button onclick="appendCalc('8')">8</button>
+            <button onclick="appendCalc('9')">9</button>
+            <button onclick="appendCalc('/')">÷</button>
+
+            <button onclick="appendCalc('4')">4</button>
+            <button onclick="appendCalc('5')">5</button>
+            <button onclick="appendCalc('6')">6</button>
+            <button onclick="appendCalc('*')">×</button>
+
+            <button onclick="appendCalc('1')">1</button>
+            <button onclick="appendCalc('2')">2</button>
+            <button onclick="appendCalc('3')">3</button>
+            <button onclick="appendCalc('-')">-</button>
+
+            <button onclick="appendCalc('0')">0</button>
+            <button onclick="appendCalc('.')">.</button>
+            <button onclick="calculate()">=</button>
+            <button onclick="appendCalc('+')">+</button>
+
+            <button onclick="clearCalc()" style="grid-column: span 4; background:#ff4e4e;">Clear</button>
+        </div>
+        <div class="history" id="calc-history"></div>
+    </div>
+
+    <!-- Currency Converter -->
+    <div class="tab-content" id="currency">
+        <input type="number" id="currency-amount" placeholder="Amount">
+        <select id="currency-from">
+            <option value="USD">USD</option>
+            <option value="EUR">EUR</option>
+            <option value="PKR">PKR</option>
+            <option value="JPY">JPY</option>
+        </select>
+        <select id="currency-to">
+            <option value="USD">USD</option>
+            <option value="EUR">EUR</option>
+            <option value="PKR">PKR</option>
+            <option value="JPY">JPY</option>
+        </select>
+        <button onclick="convertCurrency()">Convert</button>
+        <p id="currency-result"></p>
+    </div>
+
+    <!-- Investment Calculator -->
+    <div class="tab-content" id="investment">
+        <input type="number" id="investment-amount" placeholder="Principal Amount">
+        <input type="number" id="investment-rate" placeholder="Interest Rate (%)">
+        <input type="number" id="investment-years" placeholder="Years">
+        <select id="investment-type">
+            <option value="simple">Simple Interest</option>
+            <option value="compound">Compound Interest</option>
+        </select>
+        <button onclick="calculateInvestment()">Calculate</button>
+        <p id="investment-result"></p>
+    </div>
+</div>
+
+<script>
+    // Tabs
+    const tabs = document.querySelectorAll('.tab');
+    const tabContents = document.querySelectorAll('.tab-content');
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            tabContents.forEach(tc => tc.classList.remove('active'));
+            document.getElementById(tab.dataset.tab).classList.add('active');
+        });
+    });
+
+    // Standard Calculator
+    let calcExpression = '';
+    const display = document.getElementById('calc-display');
+    const historyDiv = document.getElementById('calc-history');
+
+    function appendCalc(value){
+        calcExpression += value;
+        display.value = calcExpression;
+    }
+
+    function calculate(){
+        try {
+            const result = eval(calcExpression);
+            display.value = result;
+            addHistory(calcExpression + ' = ' + result);
+            calcExpression = result;
+        } catch(e){
+            display.value = 'Error';
+        }
+    }
+
+    function clearCalc(){
+        calcExpression = '';
+        display.value = '';
+    }
+
+    function addHistory(item){
+        const div = document.createElement('div');
+        div.className = 'history-item';
+        div.textContent = item;
+        historyDiv.prepend(div);
+        // store history in localStorage
+        let history = JSON.parse(localStorage.getItem('calcHistory') || '[]');
+        history.unshift(item);
+        localStorage.setItem('calcHistory', JSON.stringify(history));
+    }
+
+    // Load history from localStorage
+    window.onload = () => {
+        let history = JSON.parse(localStorage.getItem('calcHistory') || '[]');
+        history.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'history-item';
+            div.textContent = item;
+            historyDiv.prepend(div);
+        });
+    }
+
+    // Currency Converter
+    const rates = { USD:1, EUR:0.92, PKR:285, JPY:148 };
+    function convertCurrency(){
+        const amount = parseFloat(document.getElementById('currency-amount').value);
+        const from = document.getElementById('currency-from').value;
+        const to = document.getElementById('currency-to').value;
+        if(isNaN(amount)) { alert('Enter valid amount'); return; }
+        const result = (amount / rates[from]) * rates[to];
+        document.getElementById('currency-result').textContent = `${amount} ${from} = ${result.toFixed(2)} ${to}`;
+    }
+
+    // Investment Calculator
+    function calculateInvestment(){
+        const P = parseFloat(document.getElementById('investment-amount').value);
+        const R = parseFloat(document.getElementById('investment-rate').value)/100;
+        const T = parseFloat(document.getElementById('investment-years').value);
+        const type = document.getElementById('investment-type').value;
+        if(isNaN(P) || isNaN(R) || isNaN(T)) { alert('Enter valid values'); return; }
+        let A;
+        if(type === 'simple'){
+            A = P + (P*R*T);
+        } else {
+            A = P * Math.pow(1+R, T);
+        }
+        document.getElementById('investment-result').textContent = `Future Value: ${A.toFixed(2)}`;
+    }
+</script>
+
+</body>
+</html>
